@@ -20,23 +20,23 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <a href="#" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          <a href="/videos" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <Video className="w-4 h-4" />
             <span>Videos</span>
           </a>
-          <a href="#" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          <a href="/map" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <MapPin className="w-4 h-4" />
             <span>Map</span>
           </a>
-          <a href="#" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          <a href="/forum" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <MessageSquare className="w-4 h-4" />
             <span>Forum</span>
           </a>
-          <a href="#" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          <a href="/news" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <Calendar className="w-4 h-4" />
             <span>Events</span>
           </a>
-          <a href="#" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          <a href="/marketplace" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <ShoppingBag className="w-4 h-4" />
             <span>Shop</span>
           </a>

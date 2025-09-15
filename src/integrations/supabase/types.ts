@@ -14,7 +14,177 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      forum_posts: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          likes_count: number | null
+          replies_count: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          likes_count?: number | null
+          replies_count?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          likes_count?: number | null
+          replies_count?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      marketplace_items: {
+        Row: {
+          category: string
+          condition: string
+          created_at: string
+          description: string
+          id: string
+          images: string[] | null
+          is_sold: boolean | null
+          location: string | null
+          price: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          condition: string
+          created_at?: string
+          description: string
+          id?: string
+          images?: string[] | null
+          is_sold?: boolean | null
+          location?: string | null
+          price?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          condition?: string
+          created_at?: string
+          description?: string
+          id?: string
+          images?: string[] | null
+          is_sold?: boolean | null
+          location?: string | null
+          price?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          instagram_handle: string | null
+          location: string | null
+          updated_at: string
+          user_id: string
+          van_type: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          instagram_handle?: string | null
+          location?: string | null
+          updated_at?: string
+          user_id: string
+          van_type?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          instagram_handle?: string | null
+          location?: string | null
+          updated_at?: string
+          user_id?: string
+          van_type?: string | null
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          business_name: string
+          category: string
+          created_at: string
+          description: string
+          email: string | null
+          id: string
+          location: string | null
+          phone: string | null
+          rating: number | null
+          reviews_count: number | null
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+          website_url: string | null
+        }
+        Insert: {
+          business_name: string
+          category: string
+          created_at?: string
+          description: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          phone?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+          website_url?: string | null
+        }
+        Update: {
+          business_name?: string
+          category?: string
+          created_at?: string
+          description?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          phone?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

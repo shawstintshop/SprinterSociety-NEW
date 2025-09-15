@@ -2,6 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Search, 
   Filter, 
@@ -13,124 +17,130 @@ import {
   ShoppingBag,
   Truck,
   Wrench,
-  Zap
+  Zap,
+  Plus,
+  Loader2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 
 const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [marketplaceItems, setMarketplaceItems] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newItem, setNewItem] = useState({ 
+    title: "", 
+    description: "", 
+    price: "", 
+    category: "", 
+    condition: "",
+    location: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
 
   const categories = [
-    { id: "all", name: "All Items", count: "2.1K", icon: ShoppingBag },
-    { id: "vans", name: "Complete Vans", count: "234", icon: Truck },
-    { id: "electrical", name: "Electrical & Solar", count: "456", icon: Zap },
-    { id: "parts", name: "Van Parts", count: "678", icon: Wrench },
-    { id: "interior", name: "Interior & Furniture", count: "345", icon: ShoppingBag },
-    { id: "exterior", name: "Exterior & Accessories", count: "289", icon: ShoppingBag },
-    { id: "tools", name: "Tools & Equipment", count: "123", icon: Wrench }
+    { id: "all", name: "All Items", icon: ShoppingBag },
+    { id: "vans", name: "Complete Vans", icon: Truck },
+    { id: "electrical", name: "Electrical & Solar", icon: Zap },
+    { id: "parts", name: "Van Parts", icon: Wrench },
+    { id: "interior", name: "Interior & Furniture", icon: ShoppingBag },
+    { id: "exterior", name: "Exterior & Accessories", icon: ShoppingBag },
+    { id: "tools", name: "Tools & Equipment", icon: Wrench }
   ];
 
-  const featuredListings = [
-    {
-      id: 1,
-      title: "2019 Mercedes Sprinter 4x4 - Fully Built",
-      price: "$145,000",
-      location: "Denver, CO",
-      distance: "120 miles",
-      images: ["https://images.unsplash.com/photo-1544978503-7ad5ac882d5d?w=400&h=300&fit=crop"],
-      seller: "VanBuilderPro",
-      rating: 4.9,
-      reviews: 67,
-      category: "vans",
-      featured: true,
-      description: "Professional build with solar, lithium batteries, full kitchen, and bathroom. 25K miles.",
-      specs: ["4x4", "Solar", "Lithium", "Full Kitchen", "Bathroom", "25K miles"],
-      postedAt: "2 days ago"
-    },
-    {
-      id: 2,
-      title: "Complete 800W Solar Kit - Renogy",
-      price: "$1,200",
-      originalPrice: "$1,800",
-      location: "Portland, OR", 
-      distance: "45 miles",
-      images: ["https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop"],
-      seller: "SolarExpert", 
-      rating: 4.8,
-      reviews: 34,
-      category: "electrical",
-      featured: true,
-      description: "Used for 1 year, excellent condition. Includes panels, charge controller, inverter, and wiring.",
-      specs: ["800W Panels", "MPPT Controller", "2000W Inverter", "Complete Wiring"],
-      postedAt: "5 hours ago"
-    },
-    {
-      id: 3,
-      title: "Custom Van Interior - Modular Kitchen",
-      price: "$3,500",
-      location: "Austin, TX",
-      distance: "230 miles", 
-      images: ["https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"],
-      seller: "WoodworkVan",
-      rating: 4.7,
-      reviews: 23,
-      category: "interior",
-      featured: false,
-      description: "Beautiful walnut kitchen unit with sink, stove, and storage. Custom made for Sprinter.",
-      specs: ["Walnut Wood", "Sink Included", "2-Burner Stove", "Sprinter Fit"],
-      postedAt: "1 day ago"
-    },
-    {
-      id: 4,
-      title: "Diesel Heater - Espar Airtronic D2",
-      price: "$450",
-      location: "Seattle, WA",
-      distance: "78 miles",
-      images: ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"],
-      seller: "HeatingPro",
-      rating: 4.9,
-      reviews: 89,
-      category: "parts",
-      featured: false,
-      description: "Lightly used Espar heater with installation kit. Perfect for winter van life.",
-      specs: ["Low Hours", "Installation Kit", "Remote Control", "Quiet Operation"],
-      postedAt: "3 days ago"
-    },
-    {
-      id: 5,
-      title: "ARB Roof Rack System - Transit",
-      price: "$890",
-      location: "Phoenix, AZ",
-      distance: "156 miles",
-      images: ["https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop"],
-      seller: "OverlandGear",
-      rating: 4.6,
-      reviews: 45,
-      category: "exterior", 
-      featured: false,
-      description: "Heavy duty roof rack system for Ford Transit. Includes crossbars and mounting hardware.",
-      specs: ["Heavy Duty", "Transit Specific", "Load Rated", "Easy Install"],
-      postedAt: "1 week ago"
-    },
-    {
-      id: 6,
-      title: "Portable Tool Kit - Van Build Essential",
-      price: "$320",
-      location: "Las Vegas, NV", 
-      distance: "89 miles",
-      images: ["https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop"],
-      seller: "ToolMaster",
-      rating: 4.5,
-      reviews: 12,
-      category: "tools",
-      featured: false,
-      description: "Complete tool set for van builds and maintenance. Includes drill, impact driver, and accessories.",
-      specs: ["Cordless Tools", "2 Batteries", "Carrying Case", "Van Build Ready"],
-      postedAt: "4 days ago"
-    }
+  const conditions = [
+    { value: "new", label: "New" },
+    { value: "like-new", label: "Like New" },
+    { value: "good", label: "Good" },
+    { value: "fair", label: "Fair" },
+    { value: "poor", label: "Poor" }
   ];
+
+  useEffect(() => {
+    fetchMarketplaceItems();
+  }, [selectedCategory]);
+
+  const fetchMarketplaceItems = async () => {
+    setIsLoading(true);
+    let query = supabase
+      .from('marketplace_items')
+      .select(`
+        *,
+        profiles!marketplace_items_user_id_fkey (
+          display_name
+        )
+      `)
+      .eq('is_sold', false)
+      .order('created_at', { ascending: false });
+
+    if (selectedCategory !== 'all') {
+      query = query.eq('category', selectedCategory);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      toast.error('Failed to load marketplace items');
+      console.error('Error fetching items:', error);
+    } else {
+      setMarketplaceItems(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const handleCreateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error('Please sign in to list an item');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await supabase
+      .from('marketplace_items')
+      .insert({
+        title: newItem.title,
+        description: newItem.description,
+        price: parseFloat(newItem.price),
+        category: newItem.category,
+        condition: newItem.condition,
+        location: newItem.location,
+        user_id: user.id,
+      });
+
+    if (error) {
+      toast.error('Failed to create listing');
+      console.error('Error creating item:', error);
+    } else {
+      toast.success('Item listed successfully!');
+      setNewItem({ title: "", description: "", price: "", category: "", condition: "", location: "" });
+      setIsCreateOpen(false);
+      fetchMarketplaceItems();
+    }
+    setIsSubmitting(false);
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    } else if (diffHours > 0) {
+      return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    } else {
+      return 'Just now';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -167,16 +177,117 @@ const Marketplace = () => {
                   <Filter className="w-4 h-4" />
                   Filters
                 </Button>
-                <Button variant="hero" className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4" />
-                  Sell Item
-                </Button>
+                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="hero" className="flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      Sell Item
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[525px]">
+                    <DialogHeader>
+                      <DialogTitle>List New Item</DialogTitle>
+                      <DialogDescription>
+                        Sell your van life gear to the community.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateItem}>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="item-title">Title</Label>
+                          <Input
+                            id="item-title"
+                            placeholder="Enter item title..."
+                            value={newItem.title}
+                            onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="item-category">Category</Label>
+                            <Select value={newItem.category} onValueChange={(value) => setNewItem({ ...newItem, category: value })} required>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {categories.filter(cat => cat.id !== 'all').map((category) => (
+                                  <SelectItem key={category.id} value={category.id}>
+                                    {category.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="item-condition">Condition</Label>
+                            <Select value={newItem.condition} onValueChange={(value) => setNewItem({ ...newItem, condition: value })} required>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select condition" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {conditions.map((condition) => (
+                                  <SelectItem key={condition.value} value={condition.value}>
+                                    {condition.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="item-price">Price ($)</Label>
+                            <Input
+                              id="item-price"
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={newItem.price}
+                              onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="item-location">Location</Label>
+                            <Input
+                              id="item-location"
+                              placeholder="City, State"
+                              value={newItem.location}
+                              onChange={(e) => setNewItem({ ...newItem, location: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="item-description">Description</Label>
+                          <Textarea
+                            id="item-description"
+                            placeholder="Describe your item..."
+                            value={newItem.description}
+                            onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                            rows={4}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit" disabled={isSubmitting}>
+                          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          List Item
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
 
               {/* Category Pills */}
               <div className="flex flex-wrap gap-2 justify-center">
                 {categories.map((category) => {
                   const Icon = category.icon;
+                  const categoryItems = selectedCategory === category.id || category.id === 'all' ? marketplaceItems : marketplaceItems.filter(item => item.category === category.id);
+                  const count = category.id === 'all' ? marketplaceItems.length : categoryItems.length;
                   return (
                     <Button
                       key={category.id}
@@ -187,7 +298,7 @@ const Marketplace = () => {
                     >
                       <Icon className="w-4 h-4" />
                       {category.name}
-                      <span className="text-xs opacity-75">({category.count})</span>
+                      <span className="text-xs opacity-75">({count})</span>
                     </Button>
                   );
                 })}
@@ -199,108 +310,104 @@ const Marketplace = () => {
         {/* Listings Grid */}
         <section className="py-12"> 
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredListings.map((listing) => (
-                <Card key={listing.id} className="group hover:shadow-glow transition-all duration-300 overflow-hidden">
-                  <div className="relative aspect-[4/3]">
-                    <img
-                      src={listing.images[0]}
-                      alt={listing.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    
-                    {/* Overlay Actions */}
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <Button variant="ghost" size="icon" className="bg-white/80 hover:bg-white">
-                        <Heart className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="bg-white/80 hover:bg-white">
-                        <Share className="w-4 h-4" />
-                      </Button>
-                    </div>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                <p className="text-muted-foreground">Loading items...</p>
+              </div>
+            ) : marketplaceItems.length === 0 ? (
+              <div className="text-center py-8">
+                <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No items yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Be the first to list an item in this category!
+                </p>
+                {user && (
+                  <Button variant="hero" onClick={() => setIsCreateOpen(true)}>
+                    List First Item
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {marketplaceItems.map((item) => (
+                    <Card key={item.id} className="group hover:shadow-glow transition-all duration-300 overflow-hidden">
+                      <div className="relative aspect-[4/3] bg-muted flex items-center justify-center">
+                        <ShoppingBag className="w-12 h-12 text-muted-foreground" />
+                        
+                        {/* Overlay Actions */}
+                        <div className="absolute top-3 right-3 flex gap-2">
+                          <Button variant="ghost" size="icon" className="bg-white/80 hover:bg-white">
+                            <Heart className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="bg-white/80 hover:bg-white">
+                            <Share className="w-4 h-4" />
+                          </Button>
+                        </div>
 
-                    {/* Featured Badge */}
-                    {listing.featured && (
-                      <Badge className="absolute top-3 left-3 bg-gradient-sunset text-white">
-                        Featured
-                      </Badge>
-                    )}
-
-                    {/* Price */}
-                    <div className="absolute bottom-3 left-3 bg-background/90 px-3 py-1 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-primary">{listing.price}</span>
-                        {listing.originalPrice && (
-                          <span className="text-sm text-muted-foreground line-through">
-                            {listing.originalPrice}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <CardContent className="p-4">
-                    <CardTitle className="text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                      {listing.title}
-                    </CardTitle>
-                    
-                    <CardDescription className="mb-3 line-clamp-2">
-                      {listing.description}
-                    </CardDescription>
-
-                    {/* Specs */}
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {listing.specs.slice(0, 3).map((spec) => (
-                        <Badge key={spec} variant="secondary" className="text-xs">
-                          {spec}
-                        </Badge>
-                      ))}
-                      {listing.specs.length > 3 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{listing.specs.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Seller Info */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{listing.seller}</span>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-secondary fill-current" />
-                          <span className="text-sm">{listing.rating}</span>
-                          <span className="text-sm text-muted-foreground">({listing.reviews})</span>
+                        {/* Price */}
+                        <div className="absolute bottom-3 left-3 bg-background/90 px-3 py-1 rounded-lg">
+                          <span className="text-lg font-bold text-primary">${item.price}</span>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Location & Actions */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="w-3 h-3" />
-                        <span>{listing.location}</span>
-                        <span>• {listing.distance}</span>
-                      </div>
-                      <Button variant="outline" size="sm" className="flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3" />
-                        Contact
-                      </Button>
-                    </div>
+                      <CardContent className="p-4">
+                        <CardTitle className="text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                          {item.title}
+                        </CardTitle>
+                        
+                        <CardDescription className="mb-3 line-clamp-2">
+                          {item.description}
+                        </CardDescription>
 
-                    <div className="text-xs text-muted-foreground mt-2">
-                      Posted {listing.postedAt}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        {/* Specs */}
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          <Badge variant="secondary" className="text-xs capitalize">
+                            {item.category}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs capitalize">
+                            {item.condition.replace('-', ' ')}
+                          </Badge>
+                        </div>
 
-            {/* Load More */}
-            <div className="text-center mt-12">
-              <Button variant="outline" size="lg">
-                Load More Listings
-              </Button>
-            </div>
+                        {/* Seller Info */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">
+                              {item.profiles?.display_name || 'Anonymous'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Location & Actions */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <MapPin className="w-3 h-3" />
+                            <span>{item.location}</span>
+                          </div>
+                          <Button variant="outline" size="sm" className="flex items-center gap-1">
+                            <MessageCircle className="w-3 h-3" />
+                            Contact
+                          </Button>
+                        </div>
+
+                        <div className="text-xs text-muted-foreground mt-2">
+                          Posted {formatTimeAgo(item.created_at)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Load More */}
+                <div className="text-center mt-12">
+                  <Button variant="outline" size="lg">
+                    Load More Listings
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </section>
       </main>

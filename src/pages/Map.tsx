@@ -15,12 +15,15 @@ import {
   MapIcon,
   List,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Share,
+  StopCircle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
+import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { locationTypeConfig, LocationType } from "@/lib/googleMaps";
 import Header from "@/components/Header";
 
@@ -45,13 +48,23 @@ const Map = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const { toast } = useToast();
+  
+  // Live member tracking
+  const { 
+    memberLocations, 
+    isSharing, 
+    startLocationSharing, 
+    stopSharing 
+  } = useRealtimePresence();
 
   const mapFilters = [
     { id: "all", name: "All Locations", icon: MapPin },
-    { id: "campsite", name: "Campsites", icon: Tent },
-    { id: "meetup", name: "Meetups", icon: Users },
-    { id: "vendor", name: "Businesses", icon: Coffee },
-    { id: "poi", name: "Points of Interest", icon: Star }
+    { id: "campsite", name: "Camp Spots", icon: Tent },
+    { id: "members", name: "Live Members", icon: Users },
+    { id: "driveway", name: "Driveway Surfing", icon: Coffee },
+    { id: "business", name: "Van Friendly", icon: Coffee },
+    { id: "event", name: "Events", icon: Star },
+    { id: "meetup", name: "Meetups", icon: Users }
   ];
 
   // Fetch locations from database
@@ -61,6 +74,14 @@ const Map = () => {
         .from('locations')
         .select('*')
         .order('rating', { ascending: false });
+
+      // Handle special "members" filter for live locations  
+      if (selectedFilter === "members") {
+        // Don't fetch regular locations, we'll show member locations instead
+        setLocations([]);
+        setLoading(false);
+        return;
+      }
 
       if (selectedFilter !== "all") {
         query = query.eq('type', selectedFilter);
@@ -96,11 +117,23 @@ const Map = () => {
     fetchLocations();
   }, [selectedFilter, searchQuery]);
 
-  // Google Maps integration
+  // Google Maps integration - combine regular locations with member locations
+  const allMapLocations = selectedFilter === "members" 
+    ? memberLocations.map(member => ({
+        id: member.id,
+        name: `Van Lifer - ${member.status}`,
+        description: member.message || `Last seen: ${new Date(member.last_seen).toLocaleDateString()}`,
+        latitude: member.latitude,
+        longitude: member.longitude,
+        type: 'live_member' as LocationType,
+        status: member.status
+      }))
+    : locations;
+
   const { mapRef, isLoaded, error } = useGoogleMaps({
     center: { lat: 39.8283, lng: -98.5795 }, // Center of USA
     zoom: 5,
-    locations: locations,
+    locations: allMapLocations,
     onLocationClick: (location) => {
       setSelectedLocation(location);
     }
@@ -178,6 +211,32 @@ const Map = () => {
                     <List className="w-4 h-4" />
                     List
                   </Button>
+                  
+                  {/* Location Sharing Controls */}
+                  {selectedFilter === "members" && (
+                    isSharing ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={stopSharing}
+                        className="flex items-center gap-2"
+                      >
+                        <StopCircle className="w-4 h-4" />
+                        Stop Sharing
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="hero" 
+                        size="sm"
+                        onClick={() => startLocationSharing('available', 'Looking for van life connections!')}
+                        className="flex items-center gap-2"
+                      >
+                        <Share className="w-4 h-4" />
+                        Share Location
+                      </Button>
+                    )
+                  )}
+                  
                   <Button variant="outline" className="flex items-center gap-2">
                     <Plus className="w-4 h-4" />
                     Add Location
@@ -338,7 +397,15 @@ const Map = () => {
           // List View
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {locations.map((location) => {
+              {(selectedFilter === "members" ? memberLocations.map(member => ({
+                id: member.id,
+                name: `Van Lifer - ${member.status}`,
+                description: member.message || `Last seen: ${new Date(member.last_seen).toLocaleDateString()}`,
+                type: 'live_member' as LocationType,
+                latitude: member.latitude,
+                longitude: member.longitude,
+                status: member.status
+              })) : allMapLocations).map((location) => {
                 const config = locationTypeConfig[location.type] || locationTypeConfig.poi;
                 return (
                   <Card key={location.id} className="hover:shadow-glow transition-all duration-300">
@@ -349,6 +416,11 @@ const Map = () => {
                           style={{ backgroundColor: config.color }}
                         />
                         {location.name}
+                        {location.type === 'live_member' && (
+                          <Badge variant="secondary" className="text-xs">
+                            {location.status}
+                          </Badge>
+                        )}
                       </CardTitle>
                       {location.description && (
                         <CardDescription>{location.description}</CardDescription>

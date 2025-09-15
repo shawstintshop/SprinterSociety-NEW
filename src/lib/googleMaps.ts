@@ -80,20 +80,35 @@ export const locationTypeConfig = {
     icon: 'https://cdn-icons-png.flaticon.com/32/1086/1086581.png', // tent icon
     label: 'Campsite'
   },
+  driveway: {
+    color: '#8b5cf6', // purple
+    icon: 'https://cdn-icons-png.flaticon.com/32/25/25694.png', // house icon
+    label: 'Driveway Surfing'
+  },
   meetup: {
     color: '#f59e0b', // amber
     icon: 'https://cdn-icons-png.flaticon.com/32/1256/1256650.png', // people icon
-    label: 'Meetup'
+    label: 'Member Meetup'
   },
-  vendor: {
+  business: {
     color: '#3b82f6', // blue
     icon: 'https://cdn-icons-png.flaticon.com/32/684/684908.png', // shop icon
-    label: 'Business'
+    label: 'Van Friendly Business'
+  },
+  event: {
+    color: '#ec4899', // pink
+    icon: 'https://cdn-icons-png.flaticon.com/32/3652/3652191.png', // event icon
+    label: 'Van Life Event'
   },
   poi: {
     color: '#ef4444', // red
-    icon: 'https://cdn-icons-png.flaticon.com/32/684/684908.png', // star icon
+    icon: 'https://cdn-icons-png.flaticon.com/32/854/854866.png', // star icon
     label: 'Point of Interest'
+  },
+  live_member: {
+    color: '#10b981', // emerald
+    icon: 'https://cdn-icons-png.flaticon.com/32/1077/1077114.png', // location icon
+    label: 'Live Member'
   }
 };
 

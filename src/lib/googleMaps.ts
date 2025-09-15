@@ -1,5 +1,7 @@
 import { Loader } from '@googlemaps/js-api-loader';
 
+// Use empty string to ensure fallback map is always used
+const GOOGLE_MAPS_API_KEY = '';
 
 export const googleMapsLoader = new Loader({
   apiKey: GOOGLE_MAPS_API_KEY,

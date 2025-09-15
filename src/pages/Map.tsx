@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { locationTypeConfig, LocationType } from "@/lib/googleMaps";
+import FallbackMap from "@/components/FallbackMap";
 import Header from "@/components/Header";
 
 interface Location {
@@ -271,12 +272,10 @@ const Map = () => {
             {/* Map Container */}
             <div className="relative">
               {error ? (
-                <div className="w-full h-full min-h-[500px] bg-muted flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-muted-foreground mb-4">Interactive map temporarily unavailable</p>
-                    <p className="text-sm text-muted-foreground">Google Maps API key configuration needed</p>
-                  </div>
-                </div>
+                <FallbackMap 
+                  locations={allMapLocations}
+                  onLocationClick={handleLocationClick}
+                />
               ) : loading ? (
                 <div className="w-full h-full min-h-[500px] bg-muted animate-pulse flex items-center justify-center">
                   <p className="text-muted-foreground">Loading map...</p>

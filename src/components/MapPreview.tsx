@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation, Users, Crown, Tent, Coffee } from "lucide-react";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
+import FallbackMap from "./FallbackMap";
 
 const MapPreview = () => {
   // Sample locations for the preview
@@ -55,15 +56,13 @@ const MapPreview = () => {
           {/* Map Container - Now with real Google Maps */}
           <div className="relative">
             <div className="bg-gradient-card rounded-2xl p-6 shadow-hero">
-              {/* Real Google Map */}
+              {/* Real Google Map with Fallback */}
               <div className="aspect-[4/3] rounded-xl overflow-hidden relative">
                 {error ? (
-                  <div className="w-full h-full bg-gradient-to-br from-accent/20 to-primary/20 rounded-xl flex items-center justify-center">
-                    <div className="text-center">
-                      <p className="text-muted-foreground mb-2">Map temporarily unavailable</p>
-                      <p className="text-sm text-muted-foreground">Showing sample interactive map preview</p>
-                    </div>
-                  </div>
+                  <FallbackMap 
+                    locations={sampleLocations}
+                    onLocationClick={(location) => console.log('Selected location:', location)}
+                  />
                 ) : !isLoaded ? (
                   <div className="w-full h-full bg-gradient-to-br from-accent/20 to-primary/20 rounded-xl flex items-center justify-center">
                     <p className="text-muted-foreground">Loading interactive map...</p>

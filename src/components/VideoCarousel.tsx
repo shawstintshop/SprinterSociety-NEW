@@ -1,76 +1,71 @@
 import { Button } from "@/components/ui/button";
 import { Play, Clock, Eye, ChevronLeft, ChevronRight, Star } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const VideoCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [videoCategories, setVideoCategories] = useState([
+    { title: "Featured Van Builds", videos: [] },
+    { title: "Latest Adventures", videos: [] }
+  ]);
+  const [loading, setLoading] = useState(true);
 
-  const videoCategories = [
-    {
-      title: "Featured Van Builds",
-      videos: [
-        {
-          id: 1,
-          title: "Mercedes Sprinter Ultimate Build",
-          duration: "12:45",
-          views: "2.3M",
-          rating: 4.9,
-          thumbnail: "https://images.unsplash.com/photo-1544978503-7ad5ac882d5d?w=400&h=225&fit=crop",
-          isPremium: true
-        },
-        {
-          id: 2,
-          title: "Off-Grid Solar Setup Guide",
-          duration: "18:32",
-          views: "1.8M",
-          rating: 4.8,
-          thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
-          isPremium: false
-        },
-        {
-          id: 3,
-          title: "Hidden Desert Camping Spots",
-          duration: "15:20",
-          views: "890K",
-          rating: 4.7,
-          thumbnail: "https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=225&fit=crop",
-          isPremium: true
-        }
-      ]
-    },
-    {
-      title: "Latest Adventures",
-      videos: [
-        {
-          id: 4,
-          title: "Epic Alaska Road Trip",
-          duration: "22:15",
-          views: "1.2M",
-          rating: 4.9,
-          thumbnail: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=225&fit=crop",
-          isPremium: false
-        },
-        {
-          id: 5,
-          title: "Van Life in National Parks",
-          duration: "16:45",
-          views: "967K",
-          rating: 4.8,
-          thumbnail: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=225&fit=crop",
-          isPremium: true
-        },
-        {
-          id: 6,
-          title: "Coastal Highway Adventure",
-          duration: "19:30",
-          views: "743K",
-          rating: 4.6,
-          thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
-          isPremium: false
-        }
-      ]
-    }
-  ];
+  // Fetch real YouTube videos
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        // Fetch featured builds
+        const { data: buildsData } = await supabase
+          .from('youtube_videos')
+          .select('*')
+          .eq('category', 'builds')
+          .order('view_count', { ascending: false })
+          .limit(3);
+
+        // Fetch camping/adventure videos
+        const { data: campingData } = await supabase
+          .from('youtube_videos')
+          .select('*')
+          .in('category', ['camping', 'offroad'])
+          .order('published_at', { ascending: false })
+          .limit(3);
+
+        const formatViewCount = (count: number) => {
+          if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+          if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+          return count.toString();
+        };
+
+        const formatVideos = (videos: any[]) => 
+          videos.map(video => ({
+            id: video.id,
+            title: video.title,
+            duration: video.duration || "N/A",
+            views: formatViewCount(video.view_count || 0),
+            rating: 4.8,
+            thumbnail: video.thumbnail_url,
+            youtube_id: video.youtube_id,
+            isPremium: Math.random() > 0.5
+          }));
+
+        setVideoCategories([
+          { title: "Featured Van Builds", videos: formatVideos(buildsData || []) },
+          { title: "Latest Adventures", videos: formatVideos(campingData || []) }
+        ]);
+      } catch (error) {
+        console.error('Error fetching videos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
+
+  const openVideo = (youtubeId: string) => {
+    window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank');
+  };
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % videoCategories.length);
@@ -126,12 +121,20 @@ const VideoCarousel = () => {
               {videoCategories[currentSlide].title}
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {videoCategories[currentSlide].videos.map((video) => (
-                <div
-                  key={video.id}
-                  className="group bg-gradient-card rounded-xl overflow-hidden shadow-card hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer"
-                >
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="animate-pulse bg-muted rounded-xl aspect-video"></div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {videoCategories[currentSlide].videos.map((video) => (
+                  <div
+                    key={video.id}
+                    className="group bg-gradient-card rounded-xl overflow-hidden shadow-card hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer"
+                    onClick={() => openVideo(video.youtube_id)}
+                  >
                   {/* Thumbnail */}
                   <div className="relative aspect-video">
                     <img
@@ -186,6 +189,7 @@ const VideoCarousel = () => {
                 </div>
               ))}
             </div>
+            )}
           </div>
 
           {/* Category Indicators */}

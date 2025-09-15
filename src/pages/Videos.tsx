@@ -1,100 +1,146 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Play, Clock, Eye, Star, Crown } from "lucide-react";
-import { useState } from "react";
+import { Search, Filter, Play, Clock, Eye, Star, Crown, RefreshCw } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useYouTubeSync } from "@/hooks/useYouTubeSync";
 import Header from "@/components/Header";
 
 const Videos = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [videos, setVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const { toast } = useToast();
+  
+  // Auto-sync YouTube videos daily
+  useYouTubeSync();
 
   const videoCategories = [
-    { id: "all", name: "All Videos", count: "10K+" },
-    { id: "builds", name: "Van Builds & Tours", count: "2.1K" },
-    { id: "electrical", name: "Electrical & Solar", count: "1.8K" },
-    { id: "plumbing", name: "Plumbing & Heating", count: "1.2K" },
-    { id: "mods", name: "Mods & Upgrades", count: "1.5K" },
-    { id: "maintenance", name: "Maintenance & Repairs", count: "980" },
-    { id: "camping", name: "Camping Spots & Travel", count: "2.3K" },
-    { id: "tips", name: "Tips, Tricks & Hacks", count: "1.1K" },
-    { id: "offroad", name: "Offroad Adventures", count: "650" },
-    { id: "reviews", name: "Product Reviews & Installs", count: "890" },
-    { id: "events", name: "Events & Expos", count: "320" }
+    { id: "all", name: "All Videos", count: "" },
+    { id: "builds", name: "Van Builds & Tours", count: "" },
+    { id: "electrical", name: "Electrical & Solar", count: "" },
+    { id: "plumbing", name: "Plumbing & Heating", count: "" },
+    { id: "mods", name: "Mods & Upgrades", count: "" },
+    { id: "maintenance", name: "Maintenance & Repairs", count: "" },
+    { id: "camping", name: "Camping Spots & Travel", count: "" },
+    { id: "tips", name: "Tips, Tricks & Hacks", count: "" },
+    { id: "offroad", name: "Offroad Adventures", count: "" },
+    { id: "reviews", name: "Product Reviews & Installs", count: "" },
+    { id: "van-life", name: "General Van Life", count: "" }
   ];
 
-  const featuredVideos = [
-    {
-      id: 1,
-      title: "Complete Mercedes Sprinter 4x4 Build - $180K Ultimate Van",
-      thumbnail: "https://images.unsplash.com/photo-1544978503-7ad5ac882d5d?w=400&h=225&fit=crop",
-      duration: "45:32",
-      views: "2.3M",
-      rating: 4.9,
-      channel: "Van Life Builds",
-      isPremium: true,
-      category: "builds"
-    },
-    {
-      id: 2, 
-      title: "Solar System Installation - 1200W Off-Grid Setup",
-      thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
-      duration: "28:15",
-      views: "1.8M", 
-      rating: 4.8,
-      channel: "Solar Van Life",
-      isPremium: false,
-      category: "electrical"
-    },
-    {
-      id: 3,
-      title: "Hidden Boondocking Spots - Pacific Northwest",
-      thumbnail: "https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=225&fit=crop",
-      duration: "22:45",
-      views: "1.2M",
-      rating: 4.7,
-      channel: "Adventure Seekers",
-      isPremium: true,
-      category: "camping"
-    },
-    {
-      id: 4,
-      title: "Diesel Heater Installation & Troubleshooting Guide",
-      thumbnail: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=225&fit=crop",
-      duration: "18:30",
-      views: "890K",
-      rating: 4.6,
-      channel: "Van Tech",
-      isPremium: false,
-      category: "plumbing"
-    },
-    {
-      id: 5,
-      title: "Epic Alaska Road Trip - 30 Days Off-Grid",
-      thumbnail: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=225&fit=crop",
-      duration: "35:20",
-      views: "1.5M",
-      rating: 4.9,
-      channel: "Nomadic Expeditions",
-      isPremium: true,
-      category: "offroad"
-    },
-    {
-      id: 6,
-      title: "Top 10 Van Life Gadgets Under $50",
-      thumbnail: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=225&fit=crop",
-      duration: "15:45",
-      views: "750K",
-      rating: 4.5,
-      channel: "Budget Van Life",
-      isPremium: false,
-      category: "reviews"
+  // Fetch videos from database
+  const fetchVideos = async () => {
+    try {
+      let query = supabase
+        .from('youtube_videos')
+        .select('*')
+        .order('published_at', { ascending: false });
+
+      if (selectedCategory !== "all") {
+        query = query.eq('category', selectedCategory);
+      }
+
+      if (searchQuery.trim()) {
+        query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,channel_title.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await query.limit(50);
+
+      if (error) {
+        console.error('Error fetching videos:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load videos. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setVideos(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load videos. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const filteredVideos = selectedCategory === "all" 
-    ? featuredVideos 
-    : featuredVideos.filter(video => video.category === selectedCategory);
+  // Refresh videos from YouTube API
+  const refreshFromYouTube = async () => {
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-youtube-videos', {
+        body: { maxResults: 30, forceRefresh: true }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: `Fetched ${data.count} new videos from YouTube!`,
+      });
+
+      // Refresh the local data
+      await fetchVideos();
+    } catch (error) {
+      console.error('Error refreshing videos:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh videos from YouTube. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Format view count for display
+  const formatViewCount = (count: number) => {
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M`;
+    }
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
+    return count.toString();
+  };
+
+  // Open YouTube video in new tab
+  const openVideo = (youtubeId: string) => {
+    window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank');
+  };
+
+  useEffect(() => {
+    fetchVideos();
+  }, [selectedCategory, searchQuery]);
+
+  // Initial data load - try to fetch from YouTube if no videos exist
+  useEffect(() => {
+    const initializeData = async () => {
+      const { data } = await supabase
+        .from('youtube_videos')
+        .select('id')
+        .limit(1);
+
+      if (!data || data.length === 0) {
+        console.log('No videos found, fetching from YouTube...');
+        await refreshFromYouTube();
+      }
+    };
+
+    initializeData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -153,71 +199,114 @@ const Videos = () => {
         {/* Video Grid */}
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredVideos.map((video) => (
-                <Card key={video.id} className="group bg-gradient-card hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden">
-                  <div className="relative aspect-video">
-                    <img
-                      src={video.thumbnail}
-                      alt={video.title}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {/* Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Button variant="hero" size="icon" className="shadow-lg">
-                          <Play className="w-6 h-6" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Premium Badge */}
-                    {video.isPremium && (
-                      <div className="absolute top-3 right-3 bg-gradient-sunset px-2 py-1 rounded text-white text-xs font-semibold flex items-center">
-                        <Crown className="w-3 h-3 mr-1" />
-                        Premium
-                      </div>
-                    )}
-
-                    {/* Duration */}
-                    <div className="absolute bottom-3 right-3 bg-black/80 px-2 py-1 rounded text-white text-xs flex items-center">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {video.duration}
-                    </div>
-                  </div>
-
-                  <CardContent className="p-4">
-                    <CardTitle className="text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                      {video.title}
-                    </CardTitle>
-                    <CardDescription className="mb-3">
-                      {video.channel}
-                    </CardDescription>
-                    
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center">
-                          <Eye className="w-4 h-4 mr-1" />
-                          {video.views}
-                        </div>
-                        <div className="flex items-center">
-                          <Star className="w-4 h-4 mr-1 text-secondary" />
-                          {video.rating}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Load More */}
-            <div className="text-center mt-12">
-              <Button variant="outline" size="lg">
-                Load More Videos
+            {/* Header with refresh button */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">
+                {selectedCategory === "all" ? "Latest Videos" : videoCategories.find(c => c.id === selectedCategory)?.name}
+              </h2>
+              <Button 
+                variant="outline" 
+                onClick={refreshFromYouTube}
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Refreshing...' : 'Refresh from YouTube'}
               </Button>
             </div>
+
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <div className="aspect-video bg-muted"></div>
+                    <CardContent className="p-4">
+                      <div className="h-4 bg-muted rounded mb-2"></div>
+                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : videos.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">No videos found.</p>
+                <Button onClick={refreshFromYouTube} disabled={refreshing}>
+                  {refreshing ? 'Loading...' : 'Load Videos from YouTube'}
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {videos.map((video) => (
+                  <Card 
+                    key={video.id} 
+                    className="group bg-gradient-card hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden"
+                    onClick={() => openVideo(video.youtube_id)}
+                  >
+                    <div className="relative aspect-video">
+                      <img
+                        src={video.thumbnail_url}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Button variant="hero" size="icon" className="shadow-lg">
+                            <Play className="w-6 h-6" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Duration */}
+                      {video.duration && (
+                        <div className="absolute bottom-3 right-3 bg-black/80 px-2 py-1 rounded text-white text-xs flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {video.duration}
+                        </div>
+                      )}
+
+                      {/* Category Badge */}
+                      <div className="absolute top-3 left-3 bg-gradient-sunset px-2 py-1 rounded text-white text-xs font-semibold">
+                        {videoCategories.find(c => c.id === video.category)?.name || 'Van Life'}
+                      </div>
+                    </div>
+
+                    <CardContent className="p-4">
+                      <CardTitle className="text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                        {video.title}
+                      </CardTitle>
+                      <CardDescription className="mb-3 line-clamp-1">
+                        {video.channel_title}
+                      </CardDescription>
+                      
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center">
+                            <Eye className="w-4 h-4 mr-1" />
+                            {formatViewCount(video.view_count || 0)}
+                          </div>
+                          <div className="flex items-center">
+                            <Star className="w-4 h-4 mr-1 text-secondary" />
+                            {new Date(video.published_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Load More */}
+            {videos.length > 0 && (
+              <div className="text-center mt-12">
+                <Button variant="outline" size="lg" onClick={fetchVideos}>
+                  Load More Videos
+                </Button>
+              </div>
+            )}
           </div>
         </section>
       </main>

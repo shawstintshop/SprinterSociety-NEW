@@ -1,7 +1,39 @@
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation, Users, Crown, Tent, Coffee } from "lucide-react";
+import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 
 const MapPreview = () => {
+  // Sample locations for the preview
+  const sampleLocations = [
+    {
+      id: "1",
+      name: "Moab BLM Camping",
+      description: "Free dispersed camping with stunning red rock views",
+      latitude: 38.5733,
+      longitude: -109.5498,
+      type: "campsite" as const,
+      amenities: ["free_camping", "scenic_views"],
+      rating: 4.8
+    },
+    {
+      id: "2", 
+      name: "Quartzsite Meetup",
+      description: "Van life community gathering",
+      latitude: 33.6639,
+      longitude: -114.2251,
+      type: "meetup" as const,
+      amenities: ["community", "networking"],
+      rating: 4.5
+    }
+  ];
+
+  // Initialize Google Maps for preview
+  const { mapRef, isLoaded } = useGoogleMaps({
+    center: { lat: 38.5733, lng: -109.5498 }, // Moab area
+    zoom: 8,
+    locations: sampleLocations
+  });
+
   return (
     <section className="py-16 bg-gradient-to-br from-background to-muted/30">
       <div className="container mx-auto px-4">
@@ -20,63 +52,21 @@ const MapPreview = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Map Mockup */}
+          {/* Map Container - Now with real Google Maps */}
           <div className="relative">
             <div className="bg-gradient-card rounded-2xl p-6 shadow-hero">
-              {/* Map Container */}
-              <div className="aspect-[4/3] bg-gradient-to-br from-accent/20 to-primary/20 rounded-xl relative overflow-hidden">
-                {/* Map Background Pattern */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="w-full h-full bg-gradient-to-br from-primary to-accent"></div>
-                  <div className="absolute inset-0" style={{
-                    backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
-                                     radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-                    backgroundSize: '20px 20px'
-                  }}></div>
-                </div>
-
-                {/* Map Pins */}
-                <div className="absolute top-[20%] left-[30%] group cursor-pointer">
-                  <div className="w-8 h-8 bg-gradient-sunset rounded-full flex items-center justify-center shadow-glow animate-pulse">
-                    <MapPin className="w-4 h-4 text-white" />
+              {/* Real Google Map */}
+              <div className="aspect-[4/3] rounded-xl overflow-hidden relative">
+                {!isLoaded ? (
+                  <div className="w-full h-full bg-gradient-to-br from-accent/20 to-primary/20 rounded-xl flex items-center justify-center">
+                    <p className="text-muted-foreground">Loading interactive map...</p>
                   </div>
-                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-background px-3 py-1 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    <span className="text-sm font-medium">Secret Beach Camp</span>
-                  </div>
-                </div>
-
-                <div className="absolute top-[40%] right-[25%] group cursor-pointer">
-                  <div className="w-8 h-8 bg-gradient-forest rounded-full flex items-center justify-center shadow-glow">
-                    <Tent className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-background px-3 py-1 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    <span className="text-sm font-medium">Mountain Retreat</span>
-                  </div>
-                </div>
-
-                <div className="absolute bottom-[30%] left-[45%] group cursor-pointer">
-                  <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center shadow-glow">
-                    <Users className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-background px-3 py-1 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    <span className="text-sm font-medium">Van Life Meetup</span>
-                  </div>
-                </div>
-
-                <div className="absolute top-[60%] right-[40%] group cursor-pointer">
-                  <div className="w-6 h-6 bg-secondary rounded-full flex items-center justify-center shadow-glow">
-                    <Coffee className="w-3 h-3 text-white" />
-                  </div>
-                  <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-background px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    <span className="text-xs font-medium">Van Friendly Cafe</span>
-                  </div>
-                </div>
-
-                {/* Premium Area Overlay */}
-                <div className="absolute top-4 right-4 bg-gradient-sunset px-3 py-1 rounded-full text-white text-xs font-semibold flex items-center">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Premium Only
-                </div>
+                ) : (
+                  <div 
+                    ref={mapRef} 
+                    className="w-full h-full rounded-xl"
+                  />
+                )}
               </div>
 
               {/* Map Controls */}
@@ -109,10 +99,10 @@ const MapPreview = () => {
                 <MapPin className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">25K+ Camp Spots</h3>
+                <h3 className="text-xl font-semibold mb-2">Real Locations</h3>
                 <p className="text-muted-foreground">
-                  Discover free camping, premium locations, and secret member-only spots 
-                  across North America
+                  Browse actual camping spots, verified locations, and community-submitted 
+                  gems across North America
                 </p>
               </div>
             </div>
@@ -148,10 +138,10 @@ const MapPreview = () => {
                 <Crown className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">Premium Features</h3>
+                <h3 className="text-xl font-semibold mb-2">Interactive Features</h3>
                 <p className="text-muted-foreground">
-                  Access exclusive locations, offline maps, weather alerts, 
-                  and advanced filtering options
+                  Full Google Maps integration with street view, satellite imagery, 
+                  and detailed location information
                 </p>
               </div>
             </div>

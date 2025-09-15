@@ -50,6 +50,60 @@ export type Database = {
         }
         Relationships: []
       }
+      locations: {
+        Row: {
+          amenities: string[] | null
+          contact_info: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          images: string[] | null
+          latitude: number
+          longitude: number
+          name: string
+          rating: number | null
+          reviews_count: number | null
+          type: string
+          updated_at: string
+          user_id: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          amenities?: string[] | null
+          contact_info?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          latitude: number
+          longitude: number
+          name: string
+          rating?: number | null
+          reviews_count?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          amenities?: string[] | null
+          contact_info?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          latitude?: number
+          longitude?: number
+          name?: string
+          rating?: number | null
+          reviews_count?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       marketplace_items: {
         Row: {
           category: string

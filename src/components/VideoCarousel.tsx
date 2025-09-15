@@ -16,7 +16,7 @@ const VideoCarousel = () => {
     const fetchVideos = async () => {
       try {
         // Fetch featured builds
-        const { data: buildsData } = await supabase
+        const { data: buildsData, error: buildsError } = await supabase
           .from('youtube_videos')
           .select('*')
           .eq('category', 'builds')
@@ -24,12 +24,15 @@ const VideoCarousel = () => {
           .limit(3);
 
         // Fetch camping/adventure videos
-        const { data: campingData } = await supabase
+        const { data: campingData, error: campingError } = await supabase
           .from('youtube_videos')
           .select('*')
-          .in('category', ['camping', 'offroad'])
+          .in('category', ['camping', 'van-life', 'electrical', 'plumbing'])
           .order('published_at', { ascending: false })
           .limit(3);
+
+        if (buildsError) console.error('Builds fetch error:', buildsError);
+        if (campingError) console.error('Camping fetch error:', campingError);
 
         const formatViewCount = (count: number) => {
           if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;

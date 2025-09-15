@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Menu, Bell, MessageSquare, MapPin, Video, Calendar, ShoppingBag, Crown, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,37 +24,37 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center space-x-2">
+        <Link to="/" className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">V</span>
           </div>
           <h1 className="text-xl font-bold bg-gradient-hero bg-clip-text text-transparent">
             VanLife Community
           </h1>
-        </div>
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <a href="/videos" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          <Link to="/videos" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <Video className="w-4 h-4" />
             <span>Videos</span>
-          </a>
-          <a href="/map" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          </Link>
+          <Link to="/map" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <MapPin className="w-4 h-4" />
             <span>Map</span>
-          </a>
-          <a href="/forum" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          </Link>
+          <Link to="/forum" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <MessageSquare className="w-4 h-4" />
             <span>Forum</span>
-          </a>
-          <a href="/news" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          </Link>
+          <Link to="/news" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <Calendar className="w-4 h-4" />
             <span>Events</span>
-          </a>
-          <a href="/marketplace" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+          </Link>
+          <Link to="/marketplace" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <ShoppingBag className="w-4 h-4" />
             <span>Shop</span>
-          </a>
+          </Link>
         </nav>
 
         {/* Search and Actions */}
@@ -115,26 +115,26 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-background/95 backdrop-blur-md border-b border-border">
           <nav className="container mx-auto px-4 py-4 space-y-3">
-            <a href="#" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2">
+            <Link to="/videos" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
               <Video className="w-5 h-5" />
               <span className="font-medium">Videos</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2">
+            </Link>
+            <Link to="/map" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
               <MapPin className="w-5 h-5" />
               <span className="font-medium">Map</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2">
+            </Link>
+            <Link to="/forum" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
               <MessageSquare className="w-5 h-5" />
               <span className="font-medium">Forum</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2">
+            </Link>
+            <Link to="/news" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
               <Calendar className="w-5 h-5" />
               <span className="font-medium">Events</span>
-            </a>
-            <a href="#" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2">
+            </Link>
+            <Link to="/marketplace" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
               <ShoppingBag className="w-5 h-5" />
               <span className="font-medium">Shop</span>
-            </a>
+            </Link>
             <div className="pt-3 border-t border-border">
               <Button variant="hero" className="w-full mb-2">
                 <Crown className="w-4 h-4 mr-2" />

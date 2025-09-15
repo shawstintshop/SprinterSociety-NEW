@@ -27,8 +27,8 @@ const MapPreview = () => {
     }
   ];
 
-  // Initialize Google Maps for preview
-  const { mapRef, isLoaded } = useGoogleMaps({
+  // Initialize Google Maps for preview with better error handling
+  const { mapRef, isLoaded, error } = useGoogleMaps({
     center: { lat: 38.5733, lng: -109.5498 }, // Moab area
     zoom: 8,
     locations: sampleLocations
@@ -57,7 +57,14 @@ const MapPreview = () => {
             <div className="bg-gradient-card rounded-2xl p-6 shadow-hero">
               {/* Real Google Map */}
               <div className="aspect-[4/3] rounded-xl overflow-hidden relative">
-                {!isLoaded ? (
+                {error ? (
+                  <div className="w-full h-full bg-gradient-to-br from-accent/20 to-primary/20 rounded-xl flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-muted-foreground mb-2">Map temporarily unavailable</p>
+                      <p className="text-sm text-muted-foreground">Showing sample interactive map preview</p>
+                    </div>
+                  </div>
+                ) : !isLoaded ? (
                   <div className="w-full h-full bg-gradient-to-br from-accent/20 to-primary/20 rounded-xl flex items-center justify-center">
                     <p className="text-muted-foreground">Loading interactive map...</p>
                   </div>

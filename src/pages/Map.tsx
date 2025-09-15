@@ -269,8 +269,15 @@ const Map = () => {
         {viewMode === 'map' ? (
           <div className="flex flex-col lg:flex-row min-h-[calc(100vh-200px)]">
             {/* Map Container */}
-            <div className="flex-1 relative">
-              {loading ? (
+            <div className="relative">
+              {error ? (
+                <div className="w-full h-full min-h-[500px] bg-muted flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-muted-foreground mb-4">Interactive map temporarily unavailable</p>
+                    <p className="text-sm text-muted-foreground">Google Maps API key configuration needed</p>
+                  </div>
+                </div>
+              ) : loading ? (
                 <div className="w-full h-full min-h-[500px] bg-muted animate-pulse flex items-center justify-center">
                   <p className="text-muted-foreground">Loading map...</p>
                 </div>

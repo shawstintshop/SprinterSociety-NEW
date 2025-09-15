@@ -8,37 +8,37 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Vanlife Adventure Color Palette */
-    --background: 220 13% 9%;
-    --foreground: 35 15% 95%;
+    /* Light Mode - Vanlife Adventure Color Palette */
+    --background: 0 0% 100%;
+    --foreground: 220 13% 9%;
 
-    --card: 220 13% 11%;
-    --card-foreground: 35 15% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 9%;
 
-    --popover: 220 13% 11%;
-    --popover-foreground: 35 15% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 9%;
 
     /* Forest Green Primary */
     --primary: 150 40% 25%;
-    --primary-foreground: 35 15% 95%;
+    --primary-foreground: 0 0% 100%;
     --primary-glow: 150 40% 35%;
 
     /* Sunset Orange Secondary */
     --secondary: 25 85% 55%;
-    --secondary-foreground: 220 13% 9%;
+    --secondary-foreground: 0 0% 100%;
 
     /* Mountain Blue Accent */
     --accent: 210 60% 45%;
-    --accent-foreground: 35 15% 95%;
+    --accent-foreground: 0 0% 100%;
 
-    --muted: 220 13% 15%;
-    --muted-foreground: 35 8% 70%;
+    --muted: 210 40% 98%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 35 15% 95%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 15%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 150 40% 35%;
 
     --radius: 0.75rem;
@@ -76,33 +76,37 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark Mode - Vanlife Adventure Color Palette */
+    --background: 220 13% 9%;
+    --foreground: 35 15% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 13% 11%;
+    --card-foreground: 35 15% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 13% 11%;
+    --popover-foreground: 35 15% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Forest Green Primary */
+    --primary: 150 40% 25%;
+    --primary-foreground: 35 15% 95%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Sunset Orange Secondary */
+    --secondary: 25 85% 55%;
+    --secondary-foreground: 220 13% 9%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Mountain Blue Accent */
+    --accent: 210 60% 45%;
+    --accent-foreground: 35 15% 95%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 35 8% 70%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 35 15% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 220 13% 20%;
+    --input: 220 13% 15%;
+    --ring: 150 40% 35%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

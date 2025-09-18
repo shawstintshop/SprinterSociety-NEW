@@ -15,6 +15,8 @@ const VideoCarousel = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
+        console.log('Fetching YouTube videos...');
+        
         // Fetch featured builds
         const { data: buildsData, error: buildsError } = await supabase
           .from('youtube_videos')
@@ -23,38 +25,52 @@ const VideoCarousel = () => {
           .order('view_count', { ascending: false })
           .limit(3);
 
-        // Fetch camping/adventure videos
-        const { data: campingData, error: campingError } = await supabase
+        console.log('Builds data:', buildsData, 'Error:', buildsError);
+
+        // Fetch camping/adventure videos  
+        const { data: adventureData, error: adventureError } = await supabase
           .from('youtube_videos')
           .select('*')
-          .in('category', ['camping', 'van-life', 'electrical', 'plumbing'])
-          .order('published_at', { ascending: false })
+          .in('category', ['camping', 'van-life', 'tips'])
+          .order('view_count', { ascending: false })
           .limit(3);
 
-        if (buildsError) console.error('Builds fetch error:', buildsError);
-        if (campingError) console.error('Camping fetch error:', campingError);
+        console.log('Adventure data:', adventureData, 'Error:', adventureError);
+
+        if (buildsError) {
+          console.error('Builds fetch error:', buildsError);
+        }
+        if (adventureError) {
+          console.error('Adventure fetch error:', adventureError);
+        }
 
         const formatViewCount = (count: number) => {
           if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
           if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-          return count.toString();
+          return count?.toString() || '0';
         };
 
         const formatVideos = (videos: any[]) => 
-          videos.map(video => ({
+          videos?.map(video => ({
             id: video.id,
             title: video.title,
-            duration: video.duration || "N/A",
+            duration: video.duration || "15:30",
             views: formatViewCount(video.view_count || 0),
             rating: 4.8,
             thumbnail: video.thumbnail_url,
             youtube_id: video.youtube_id,
-            isPremium: Math.random() > 0.5
-          }));
+            isPremium: false
+          })) || [];
+
+        const buildVideos = formatVideos(buildsData || []);
+        const adventureVideos = formatVideos(adventureData || []);
+
+        console.log('Formatted builds:', buildVideos);
+        console.log('Formatted adventures:', adventureVideos);
 
         setVideoCategories([
-          { title: "Featured Van Builds", videos: formatVideos(buildsData || []) },
-          { title: "Latest Adventures", videos: formatVideos(campingData || []) }
+          { title: "Featured Van Builds", videos: buildVideos },
+          { title: "Van Life Adventures", videos: adventureVideos }
         ]);
       } catch (error) {
         console.error('Error fetching videos:', error);

@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import VideoCarousel from "@/components/VideoCarousel";
+import VideoEmbedSection from "@/components/VideoEmbedSection";
 import MapPreview from "@/components/MapPreview";
 import PremiumSection from "@/components/PremiumSection";
 
@@ -11,6 +12,7 @@ const Index = () => {
       <main>
         <Hero />
         <VideoCarousel />
+        <VideoEmbedSection />
         <MapPreview />
         <PremiumSection />
       </main>

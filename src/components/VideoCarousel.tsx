@@ -34,6 +34,14 @@ const VideoCarousel = () => {
 
         console.log('Fresh builds data:', buildsData);
         console.log('Fresh adventure data:', adventureData);
+        
+        // Debug: Check if we got any data
+        if (!buildsData || buildsData.length === 0) {
+          console.warn('No builds data received!');
+        }
+        if (!adventureData || adventureData.length === 0) {
+          console.warn('No adventure data received!');
+        }
 
         if (buildsError) console.error('Builds fetch error:', buildsError);
         if (adventureError) console.error('Adventure fetch error:', adventureError);
@@ -58,10 +66,13 @@ const VideoCarousel = () => {
 
         const buildVideos = formatVideos(buildsData || []);
         const adventureVideos = formatVideos(adventureData || []);
+        
+        console.log('Formatted build videos:', buildVideos);
+        console.log('Formatted adventure videos:', adventureVideos);
 
         setVideoCategories([
           { title: "Featured Van Builds", videos: buildVideos },
-          { title: "Van Life Adventures", videos: adventureVideos }
+          { title: "Van Life Reviews", videos: adventureVideos }
         ]);
       } catch (error) {
         console.error('Error fetching videos:', error);
@@ -151,6 +162,11 @@ const VideoCarousel = () => {
                       src={video.thumbnail}
                       alt={video.title}
                       className="w-full h-full object-cover"
+                      onLoad={() => console.log('Image loaded:', video.title)}
+                      onError={(e) => {
+                        console.error('Image failed to load:', video.title, video.thumbnail);
+                        e.currentTarget.src = 'https://via.placeholder.com/640x360/1f2937/ffffff?text=Van+Life+Video';
+                      }}
                     />
                     
                     {/* Overlay */}

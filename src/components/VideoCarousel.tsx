@@ -7,24 +7,22 @@ const VideoCarousel = () => {
   const [videos, setVideos] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchVideos = async () => {
-      console.log('Fetching all YouTube videos...');
-      
+    const fetchFeaturedVideos = async () => {
       const { data, error } = await supabase
         .from('youtube_videos')
         .select('*')
-        .order('view_count', { ascending: false });
+        .order('view_count', { ascending: false })
+        .limit(8);
 
       if (error) {
-        console.error('Error:', error);
+        console.error('Error fetching featured videos:', error);
         return;
       }
 
-      console.log('All videos:', data);
       setVideos(data || []);
     };
 
-    fetchVideos();
+    fetchFeaturedVideos();
   }, []);
 
   const openVideo = (youtubeId: string) => {

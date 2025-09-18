@@ -20,17 +20,17 @@ const Videos = () => {
   useYouTubeSync();
 
   const videoCategories = [
-    { id: "all", name: "All Videos", count: "" },
-    { id: "builds", name: "Van Builds & Tours", count: "" },
-    { id: "electrical", name: "Electrical & Solar", count: "" },
-    { id: "plumbing", name: "Plumbing & Heating", count: "" },
-    { id: "mods", name: "Mods & Upgrades", count: "" },
-    { id: "maintenance", name: "Maintenance & Repairs", count: "" },
-    { id: "camping", name: "Camping Spots & Travel", count: "" },
-    { id: "tips", name: "Tips, Tricks & Hacks", count: "" },
-    { id: "offroad", name: "Offroad Adventures", count: "" },
-    { id: "reviews", name: "Product Reviews & Installs", count: "" },
-    { id: "van-life", name: "General Van Life", count: "" }
+    { id: "all", name: "All Videos", count: "48" },
+    { id: "builds", name: "Van Builds & Tours", count: "9" },
+    { id: "electrical", name: "Electrical & Solar", count: "6" },
+    { id: "plumbing", name: "Plumbing & Heating", count: "5" },
+    { id: "mods", name: "Mods & Upgrades", count: "4" },
+    { id: "maintenance", name: "Maintenance & Repairs", count: "4" },
+    { id: "camping", name: "Camping Spots & Travel", count: "6" },
+    { id: "tips", name: "Tips, Tricks & Hacks", count: "5" },
+    { id: "offroad", name: "Offroad Adventures", count: "3" },
+    { id: "reviews", name: "Product Reviews & Installs", count: "7" },
+    { id: "van-life", name: "General Van Life", count: "5" }
   ];
 
   // Fetch videos from database

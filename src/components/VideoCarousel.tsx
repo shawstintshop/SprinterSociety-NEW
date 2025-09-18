@@ -15,9 +15,24 @@ const VideoCarousel = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        console.log('Fetching YouTube videos...');
+        console.log('Fetching real YouTube van life videos...');
         
-        // Fetch featured builds
+        // First, call the edge function to refresh videos with real data
+        console.log('Calling edge function to fetch fresh YouTube data...');
+        const { data: edgeFunctionResult, error: edgeFunctionError } = await supabase.functions.invoke('fetch-youtube-videos', {
+          body: { maxResults: 30, forceRefresh: true }
+        });
+
+        if (edgeFunctionError) {
+          console.error('Edge function error:', edgeFunctionError);
+        } else {
+          console.log('Edge function success:', edgeFunctionResult);
+        }
+
+        // Wait a moment for the database to be updated
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Now fetch the updated data from database
         const { data: buildsData, error: buildsError } = await supabase
           .from('youtube_videos')
           .select('*')
@@ -25,9 +40,6 @@ const VideoCarousel = () => {
           .order('view_count', { ascending: false })
           .limit(3);
 
-        console.log('Builds data:', buildsData, 'Error:', buildsError);
-
-        // Fetch camping/adventure videos  
         const { data: adventureData, error: adventureError } = await supabase
           .from('youtube_videos')
           .select('*')
@@ -35,14 +47,11 @@ const VideoCarousel = () => {
           .order('view_count', { ascending: false })
           .limit(3);
 
-        console.log('Adventure data:', adventureData, 'Error:', adventureError);
+        console.log('Fresh builds data:', buildsData);
+        console.log('Fresh adventure data:', adventureData);
 
-        if (buildsError) {
-          console.error('Builds fetch error:', buildsError);
-        }
-        if (adventureError) {
-          console.error('Adventure fetch error:', adventureError);
-        }
+        if (buildsError) console.error('Builds fetch error:', buildsError);
+        if (adventureError) console.error('Adventure fetch error:', adventureError);
 
         const formatViewCount = (count: number) => {
           if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -64,9 +73,6 @@ const VideoCarousel = () => {
 
         const buildVideos = formatVideos(buildsData || []);
         const adventureVideos = formatVideos(adventureData || []);
-
-        console.log('Formatted builds:', buildVideos);
-        console.log('Formatted adventures:', adventureVideos);
 
         setVideoCategories([
           { title: "Featured Van Builds", videos: buildVideos },

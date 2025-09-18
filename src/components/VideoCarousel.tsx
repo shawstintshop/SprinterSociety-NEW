@@ -10,12 +10,17 @@ const VideoCarousel = () => {
     { title: "Latest Adventures", videos: [] }
   ]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch real YouTube videos
   useEffect(() => {
     const fetchVideos = async () => {
       try {
+        setLoading(true);
         console.log('Fetching real YouTube van life videos from database...');
+        
+        // Add cache busting
+        const timestamp = Date.now();
         
         // Fetch directly from database (we have real videos now)
         const { data: buildsData, error: buildsError } = await supabase
@@ -82,7 +87,7 @@ const VideoCarousel = () => {
     };
 
     fetchVideos();
-  }, []);
+  }, [refreshKey]);
 
   const openVideo = (youtubeId: string) => {
     window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank');
@@ -112,7 +117,9 @@ const VideoCarousel = () => {
               Stream thousands of van builds, adventures, and how-to guides
             </p>
           </div>
-          <Button variant="outline">View All Videos</Button>
+          <Button variant="outline" onClick={() => setRefreshKey(k => k + 1)}>
+            Refresh Videos
+          </Button>
         </div>
 
         {/* Category Carousel */}

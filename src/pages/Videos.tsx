@@ -20,17 +20,17 @@ const Videos = () => {
   useYouTubeSync();
 
   const videoCategories = [
-    { id: "all", name: "All Videos", count: "48" },
-    { id: "builds", name: "Van Builds & Tours", count: "9" },
-    { id: "electrical", name: "Electrical & Solar", count: "6" },
-    { id: "plumbing", name: "Plumbing & Heating", count: "5" },
-    { id: "mods", name: "Mods & Upgrades", count: "4" },
-    { id: "maintenance", name: "Maintenance & Repairs", count: "4" },
-    { id: "camping", name: "Camping Spots & Travel", count: "6" },
-    { id: "tips", name: "Tips, Tricks & Hacks", count: "5" },
-    { id: "offroad", name: "Offroad Adventures", count: "3" },
-    { id: "reviews", name: "Product Reviews & Installs", count: "7" },
-    { id: "van-life", name: "General Van Life", count: "5" }
+    { id: "all", name: "All Videos" },
+    { id: "builds", name: "Van Builds & Tours" },
+    { id: "electrical", name: "Electrical & Solar" },
+    { id: "plumbing", name: "Plumbing & Heating" },
+    { id: "mods", name: "Mods & Upgrades" },
+    { id: "maintenance", name: "Maintenance & Repairs" },
+    { id: "camping", name: "Camping Spots & Travel" },
+    { id: "tips", name: "Tips, Tricks & Hacks" },
+    { id: "offroad", name: "Offroad Adventures" },
+    { id: "reviews", name: "Product Reviews & Installs" },
+    { id: "van-life", name: "General Van Life" }
   ];
 
   // Fetch videos from database
@@ -79,7 +79,7 @@ const Videos = () => {
     setRefreshing(true);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-youtube-videos', {
-        body: { maxResults: 30, forceRefresh: true }
+        body: { maxResults: 50, forceRefresh: true }
       });
 
       if (error) {
@@ -88,7 +88,7 @@ const Videos = () => {
 
       toast({
         title: "Success",
-        description: `Fetched ${data.count} new videos from YouTube!`,
+        description: `Fetched ${data.count} real van life videos from YouTube!`,
       });
 
       // Refresh the local data
@@ -134,7 +134,7 @@ const Videos = () => {
         .limit(1);
 
       if (!data || data.length === 0) {
-        console.log('No videos found, fetching from YouTube...');
+        console.log('No videos found, fetching real van life videos from YouTube...');
         await refreshFromYouTube();
       }
     };
@@ -189,7 +189,6 @@ const Videos = () => {
                   className="flex items-center gap-2"
                 >
                   {category.name}
-                  <span className="text-xs opacity-75">({category.count})</span>
                 </Button>
               ))}
             </div>

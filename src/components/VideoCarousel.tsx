@@ -28,7 +28,7 @@ const VideoCarousel = () => {
         const { data: adventureData, error: adventureError } = await supabase
           .from('youtube_videos')
           .select('*')
-          .in('category', ['camping', 'van-life', 'tips'])
+          .eq('category', 'reviews')
           .order('view_count', { ascending: false })
           .limit(3);
 

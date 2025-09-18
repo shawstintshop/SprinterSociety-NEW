@@ -15,24 +15,9 @@ const VideoCarousel = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        console.log('Fetching real YouTube van life videos...');
+        console.log('Fetching real YouTube van life videos from database...');
         
-        // First, call the edge function to refresh videos with real data
-        console.log('Calling edge function to fetch fresh YouTube data...');
-        const { data: edgeFunctionResult, error: edgeFunctionError } = await supabase.functions.invoke('fetch-youtube-videos', {
-          body: { maxResults: 30, forceRefresh: true }
-        });
-
-        if (edgeFunctionError) {
-          console.error('Edge function error:', edgeFunctionError);
-        } else {
-          console.log('Edge function success:', edgeFunctionResult);
-        }
-
-        // Wait a moment for the database to be updated
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Now fetch the updated data from database
+        // Fetch directly from database (we have real videos now)
         const { data: buildsData, error: buildsError } = await supabase
           .from('youtube_videos')
           .select('*')

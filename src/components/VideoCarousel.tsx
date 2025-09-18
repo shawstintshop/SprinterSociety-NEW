@@ -79,6 +79,12 @@ const VideoCarousel = () => {
           { title: "Featured Van Builds", videos: buildVideos },
           { title: "Van Life Reviews", videos: adventureVideos }
         ]);
+        
+        console.log('Final videoCategories set:', {
+          builds: buildVideos.length,
+          reviews: adventureVideos.length,
+          totalCategories: 2
+        });
       } catch (error) {
         console.error('Error fetching videos:', error);
       } finally {
@@ -146,14 +152,24 @@ const VideoCarousel = () => {
           {/* Current Category */}
           <div className="px-12">
             <h3 className="text-xl font-semibold mb-6 text-secondary">
-              {videoCategories[currentSlide].title}
+              {videoCategories[currentSlide].title} ({videoCategories[currentSlide].videos.length} videos)
             </h3>
+            
+            {/* Debug info */}
+            <div className="mb-4 text-sm text-muted-foreground">
+              Debug: Current slide {currentSlide}, Loading: {loading.toString()}, 
+              Videos: {videoCategories[currentSlide].videos.length}
+            </div>
             
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="animate-pulse bg-muted rounded-xl aspect-video"></div>
                 ))}
+              </div>
+            ) : videoCategories[currentSlide].videos.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No videos found. Click refresh to reload.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

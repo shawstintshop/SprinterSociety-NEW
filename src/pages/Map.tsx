@@ -2,14 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  Filter, 
-  MapPin, 
-  Navigation, 
-  Users, 
-  Crown, 
-  Tent, 
+import {
+  Search,
+  MapPin,
+  Navigation,
+  Users,
+  Tent,
   Coffee,
   Star,
   MapIcon,
@@ -17,16 +15,20 @@ import {
   Plus,
   RefreshCw,
   Share,
-  StopCircle
+  StopCircle,
+  Satellite,
+  Truck,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { useRealtimePresence } from "@/hooks/useRealtimePresence";
+import { useRealtimeVanLocations } from "@/hooks/useRealtimeVanLocations";
 import { locationTypeConfig, LocationType } from "@/lib/googleMaps";
 import FallbackMap from "@/components/FallbackMap";
 import Header from "@/components/Header";
+import { Link } from "react-router-dom";
 
 interface Location {
   id: string;
@@ -39,6 +41,7 @@ interface Location {
   rating?: number;
   reviews_count?: number;
   verified?: boolean;
+  status?: string;
 }
 
 const Map = () => {
@@ -48,19 +51,24 @@ const Map = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [showLiveVans, setShowLiveVans] = useState(true);
   const { toast } = useToast();
-  
-  // Live member tracking
-  const { 
-    memberLocations, 
-    isSharing, 
-    startLocationSharing, 
-    stopSharing 
+
+  // Live member tracking (existing)
+  const {
+    memberLocations,
+    isSharing,
+    startLocationSharing,
+    stopSharing
   } = useRealtimePresence();
+
+  // GPS van tracking (new)
+  const { liveVans } = useRealtimeVanLocations(showLiveVans);
 
   const mapFilters = [
     { id: "all", name: "All Locations", icon: MapPin },
     { id: "campsite", name: "Camp Spots", icon: Tent },
+    { id: "live_vans", name: "Live Vans", icon: Satellite },
     { id: "members", name: "Live Members", icon: Users },
     { id: "driveway", name: "Driveway Surfing", icon: Coffee },
     { id: "business", name: "Van Friendly", icon: Coffee },
@@ -76,9 +84,8 @@ const Map = () => {
         .select('*')
         .order('rating', { ascending: false });
 
-      // Handle special "members" filter for live locations  
-      if (selectedFilter === "members") {
-        // Don't fetch regular locations, we'll show member locations instead
+      // Handle special filters for live locations
+      if (selectedFilter === "members" || selectedFilter === "live_vans") {
         setLocations([]);
         setLoading(false);
         return;
@@ -118,21 +125,42 @@ const Map = () => {
     fetchLocations();
   }, [selectedFilter, searchQuery]);
 
-  // Google Maps integration - combine regular locations with member locations
-  const allMapLocations = selectedFilter === "members" 
-    ? memberLocations.map(member => ({
+  // Convert live GPS vans to map locations
+  const liveVanLocations: Location[] = liveVans.map(van => ({
+    id: van.id,
+    name: van.display_name || 'Sprinter',
+    description: van.message || `${van.status === 'traveling' ? 'On the road' : 'Parked'} — updated ${new Date(van.updated_at).toLocaleTimeString()}`,
+    latitude: van.latitude,
+    longitude: van.longitude,
+    type: 'live_van' as LocationType,
+    status: van.status,
+  }));
+
+  // Combine locations based on filter
+  const allMapLocations = (() => {
+    if (selectedFilter === "live_vans") {
+      return liveVanLocations;
+    }
+    if (selectedFilter === "members") {
+      return memberLocations.map(member => ({
         id: member.id,
         name: `Van Lifer - ${member.status}`,
         description: member.message || `Last seen: ${new Date(member.last_seen).toLocaleDateString()}`,
         latitude: member.latitude,
         longitude: member.longitude,
         type: 'live_member' as LocationType,
-        status: member.status
-      }))
-    : locations;
+        status: member.status,
+      }));
+    }
+    // For "all" filter, show regular locations plus live vans overlay
+    if (selectedFilter === "all" && showLiveVans) {
+      return [...locations, ...liveVanLocations];
+    }
+    return locations;
+  })();
 
   const { mapRef, isLoaded, error } = useGoogleMaps({
-    center: { lat: 39.8283, lng: -98.5795 }, // Center of USA
+    center: { lat: 39.8283, lng: -98.5795 },
     zoom: 5,
     locations: allMapLocations,
     onLocationClick: (location) => {
@@ -143,6 +171,25 @@ const Map = () => {
   const handleLocationClick = (location: Location) => {
     setSelectedLocation(location);
   };
+
+  // Sidebar items — show different data depending on filter
+  const sidebarItems = (() => {
+    if (selectedFilter === "live_vans") return liveVanLocations;
+    if (selectedFilter === "members") {
+      return memberLocations.map(m => ({
+        id: m.id,
+        name: `Van Lifer - ${m.status}`,
+        description: m.message || `Last seen: ${new Date(m.last_seen).toLocaleDateString()}`,
+        latitude: m.latitude,
+        longitude: m.longitude,
+        type: 'live_member' as LocationType,
+        status: m.status,
+      }));
+    }
+    return locations;
+  })();
+
+  const sidebarCount = sidebarItems.length + (selectedFilter === "all" && showLiveVans ? liveVans.length : 0);
 
   if (error) {
     return (
@@ -165,7 +212,7 @@ const Map = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="pt-16">
         {/* Hero Section */}
         <section className="py-8 bg-gradient-to-br from-background to-muted/30">
@@ -177,12 +224,12 @@ const Map = () => {
                 </span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Discover real camping spots, connect with fellow van lifers, and find van-friendly businesses
+                Discover real camping spots, track live Sprinters, connect with fellow van lifers, and find van-friendly businesses
               </p>
             </div>
 
             {/* Search & Filters */}
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -193,9 +240,9 @@ const Map = () => {
                     className="pl-10"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant={viewMode === 'map' ? 'hero' : 'outline'} 
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant={viewMode === 'map' ? 'hero' : 'outline'}
                     size="sm"
                     onClick={() => setViewMode('map')}
                     className="flex items-center gap-2"
@@ -203,8 +250,8 @@ const Map = () => {
                     <MapIcon className="w-4 h-4" />
                     Map
                   </Button>
-                  <Button 
-                    variant={viewMode === 'list' ? 'hero' : 'outline'} 
+                  <Button
+                    variant={viewMode === 'list' ? 'hero' : 'outline'}
                     size="sm"
                     onClick={() => setViewMode('list')}
                     className="flex items-center gap-2"
@@ -212,12 +259,28 @@ const Map = () => {
                     <List className="w-4 h-4" />
                     List
                   </Button>
-                  
+
+                  {/* Show Live Vans toggle */}
+                  <Button
+                    variant={showLiveVans ? 'hero' : 'outline'}
+                    size="sm"
+                    onClick={() => setShowLiveVans(!showLiveVans)}
+                    className="flex items-center gap-2"
+                  >
+                    <Satellite className="w-4 h-4" />
+                    {showLiveVans ? 'Live Vans On' : 'Live Vans Off'}
+                    {liveVans.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">
+                        {liveVans.length}
+                      </Badge>
+                    )}
+                  </Button>
+
                   {/* Location Sharing Controls */}
                   {selectedFilter === "members" && (
                     isSharing ? (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={stopSharing}
                         className="flex items-center gap-2"
@@ -226,8 +289,8 @@ const Map = () => {
                         Stop Sharing
                       </Button>
                     ) : (
-                      <Button 
-                        variant="hero" 
+                      <Button
+                        variant="hero"
                         size="sm"
                         onClick={() => startLocationSharing('available', 'Looking for van life connections!')}
                         className="flex items-center gap-2"
@@ -237,7 +300,7 @@ const Map = () => {
                       </Button>
                     )
                   )}
-                  
+
                   <Button variant="outline" className="flex items-center gap-2">
                     <Plus className="w-4 h-4" />
                     Add Location
@@ -259,6 +322,11 @@ const Map = () => {
                     >
                       <Icon className="w-4 h-4" />
                       {filter.name}
+                      {filter.id === "live_vans" && liveVans.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">
+                          {liveVans.length}
+                        </Badge>
+                      )}
                     </Button>
                   );
                 })}
@@ -270,9 +338,9 @@ const Map = () => {
         {viewMode === 'map' ? (
           <div className="flex flex-col lg:flex-row min-h-[calc(100vh-200px)]">
             {/* Map Container */}
-            <div className="relative">
+            <div className="relative flex-1">
               {error ? (
-                <FallbackMap 
+                <FallbackMap
                   locations={allMapLocations}
                   onLocationClick={handleLocationClick}
                 />
@@ -285,13 +353,13 @@ const Map = () => {
                   <p className="text-muted-foreground">Initializing Google Maps...</p>
                 </div>
               ) : (
-                <div 
-                  ref={mapRef} 
+                <div
+                  ref={mapRef}
                   className="w-full h-full min-h-[500px]"
                   style={{ minHeight: 'calc(100vh - 200px)' }}
                 />
               )}
-              
+
               {/* Map Controls */}
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 <Button variant="outline" size="icon" className="bg-background/90">
@@ -300,101 +368,250 @@ const Map = () => {
                 <Button variant="outline" size="icon" className="bg-background/90">
                   <MapPin className="w-4 h-4" />
                 </Button>
+                <Link to="/gps">
+                  <Button variant="outline" size="icon" className="bg-background/90" title="GPS Tracking Settings">
+                    <Satellite className="w-4 h-4" />
+                  </Button>
+                </Link>
               </div>
             </div>
 
             {/* Sidebar with Location List */}
             <div className="w-full lg:w-96 bg-muted/20 p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Locations</h3>
-                <Badge variant="secondary">{locations.length} found</Badge>
+                <h3 className="text-lg font-semibold">
+                  {selectedFilter === "live_vans" ? "Live Sprinters" : "Locations"}
+                </h3>
+                <Badge variant="secondary">{sidebarCount} found</Badge>
               </div>
 
-              {loading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Card key={i} className="animate-pulse">
-                      <CardContent className="p-4">
-                        <div className="h-4 bg-muted rounded mb-2"></div>
-                        <div className="h-3 bg-muted rounded w-2/3"></div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : locations.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No locations found.</p>
-                  <Button variant="outline" onClick={fetchLocations}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Refresh
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {locations.map((location) => {
-                    const config = locationTypeConfig[location.type] || locationTypeConfig.poi;
-                    return (
-                      <Card 
-                        key={location.id} 
-                        className={`hover:shadow-glow transition-all duration-300 cursor-pointer ${
-                          selectedLocation?.id === location.id ? 'ring-2 ring-primary' : ''
-                        }`}
-                        onClick={() => handleLocationClick(location)}
+              {/* Live Vans section when showing "all" */}
+              {selectedFilter === "all" && showLiveVans && liveVans.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-primary flex items-center gap-2 mb-2">
+                    <Satellite className="w-4 h-4" />
+                    Live Sprinters ({liveVans.length})
+                  </h4>
+                  <div className="space-y-2 mb-4">
+                    {liveVans.slice(0, 5).map(van => (
+                      <Card
+                        key={van.id}
+                        className="hover:shadow-glow transition-all duration-300 cursor-pointer border-primary/20"
+                        onClick={() => handleLocationClick({
+                          id: van.id,
+                          name: van.display_name || 'Sprinter',
+                          latitude: van.latitude,
+                          longitude: van.longitude,
+                          type: 'live_van' as LocationType,
+                          status: van.status,
+                        })}
                       >
-                        <CardHeader className="pb-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <CardTitle className="text-base flex items-center gap-2">
-                                {location.name}
-                                {location.verified && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <Star className="w-3 h-3 mr-1" />
-                                    Verified
-                                  </Badge>
-                                )}
-                              </CardTitle>
-                              <p className="text-sm text-muted-foreground">{config.label}</p>
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <Truck className="w-5 h-5 text-primary" />
+                              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
                             </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{van.display_name || 'Sprinter'}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {van.status === 'traveling' ? 'On the road' : 'Parked'}
+                                {van.speed ? ` — ${(van.speed * 2.237).toFixed(0)} mph` : ''}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              {van.status}
+                            </Badge>
                           </div>
-                        </CardHeader>
-
-                        <CardContent className="pt-0">
-                          {location.description && (
-                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                              {location.description}
-                            </p>
-                          )}
-
-                          {location.rating && location.rating > 0 && (
-                            <div className="flex items-center gap-2 mb-3">
-                              <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 text-secondary fill-current" />
-                                <span className="text-sm font-medium">{location.rating}</span>
-                                {location.reviews_count && (
-                                  <span className="text-sm text-muted-foreground">({location.reviews_count})</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {location.amenities && location.amenities.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {location.amenities.slice(0, 4).map((amenity) => (
-                                <Badge key={amenity} variant="secondary" className="text-xs">
-                                  {amenity.replace('_', ' ')}
-                                </Badge>
-                              ))}
-                              {location.amenities.length > 4 && (
-                                <Badge variant="secondary" className="text-xs">
-                                  +{location.amenities.length - 4} more
-                                </Badge>
-                              )}
-                            </div>
-                          )}
                         </CardContent>
                       </Card>
-                    );
-                  })}
+                    ))}
+                    {liveVans.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setSelectedFilter("live_vans")}
+                      >
+                        View all {liveVans.length} live vans
+                      </Button>
+                    )}
+                  </div>
+                  <div className="border-b border-border mb-4" />
+                </div>
+              )}
+
+              {/* Live vans filter */}
+              {selectedFilter === "live_vans" && (
+                <div className="space-y-3">
+                  {liveVanLocations.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Satellite className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground mb-2">No live Sprinters sharing right now.</p>
+                      <Link to="/gps">
+                        <Button variant="hero" size="sm">
+                          <Satellite className="w-4 h-4 mr-2" />
+                          Start Sharing Your Location
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    liveVanLocations.map(van => (
+                      <Card
+                        key={van.id}
+                        className={`hover:shadow-glow transition-all duration-300 cursor-pointer ${
+                          selectedLocation?.id === van.id ? 'ring-2 ring-primary' : ''
+                        }`}
+                        onClick={() => handleLocationClick(van)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <Truck className="w-6 h-6 text-primary" />
+                              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{van.name}</p>
+                              <p className="text-sm text-muted-foreground">{van.description}</p>
+                            </div>
+                            <Badge variant={van.status === 'traveling' ? 'default' : 'secondary'}>
+                              {van.status}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Regular location list */}
+              {selectedFilter !== "live_vans" && selectedFilter !== "members" && (
+                <>
+                  {loading ? (
+                    <div className="space-y-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Card key={i} className="animate-pulse">
+                          <CardContent className="p-4">
+                            <div className="h-4 bg-muted rounded mb-2"></div>
+                            <div className="h-3 bg-muted rounded w-2/3"></div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : locations.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No locations found.</p>
+                      <Button variant="outline" onClick={fetchLocations}>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Refresh
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {locations.map((location) => {
+                        const config = locationTypeConfig[location.type] || locationTypeConfig.poi;
+                        return (
+                          <Card
+                            key={location.id}
+                            className={`hover:shadow-glow transition-all duration-300 cursor-pointer ${
+                              selectedLocation?.id === location.id ? 'ring-2 ring-primary' : ''
+                            }`}
+                            onClick={() => handleLocationClick(location)}
+                          >
+                            <CardHeader className="pb-2">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <CardTitle className="text-base flex items-center gap-2">
+                                    {location.name}
+                                    {location.verified && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        <Star className="w-3 h-3 mr-1" />
+                                        Verified
+                                      </Badge>
+                                    )}
+                                  </CardTitle>
+                                  <p className="text-sm text-muted-foreground">{config.label}</p>
+                                </div>
+                              </div>
+                            </CardHeader>
+
+                            <CardContent className="pt-0">
+                              {location.description && (
+                                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                  {location.description}
+                                </p>
+                              )}
+
+                              {location.rating && location.rating > 0 && (
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className="flex items-center gap-1">
+                                    <Star className="w-4 h-4 text-secondary fill-current" />
+                                    <span className="text-sm font-medium">{location.rating}</span>
+                                    {location.reviews_count && (
+                                      <span className="text-sm text-muted-foreground">({location.reviews_count})</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {location.amenities && location.amenities.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {location.amenities.slice(0, 4).map((amenity) => (
+                                    <Badge key={amenity} variant="secondary" className="text-xs">
+                                      {amenity.replace('_', ' ')}
+                                    </Badge>
+                                  ))}
+                                  {location.amenities.length > 4 && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      +{location.amenities.length - 4} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Members filter */}
+              {selectedFilter === "members" && (
+                <div className="space-y-3">
+                  {memberLocations.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground mb-4">No members sharing location.</p>
+                    </div>
+                  ) : (
+                    memberLocations.map(member => (
+                      <Card
+                        key={member.id}
+                        className="hover:shadow-glow transition-all duration-300 cursor-pointer"
+                        onClick={() => handleLocationClick({
+                          id: member.id,
+                          name: `Van Lifer - ${member.status}`,
+                          latitude: member.latitude,
+                          longitude: member.longitude,
+                          type: 'live_member' as LocationType,
+                        })}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <Users className="w-5 h-5 text-primary" />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{member.status}</p>
+                              <p className="text-xs text-muted-foreground">{member.message || 'Available'}</p>
+                            </div>
+                            <Badge variant="secondary">{member.status}</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               )}
             </div>
@@ -403,25 +620,28 @@ const Map = () => {
           // List View
           <div className="container mx-auto px-4 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(selectedFilter === "members" ? memberLocations.map(member => ({
-                id: member.id,
-                name: `Van Lifer - ${member.status}`,
-                description: member.message || `Last seen: ${new Date(member.last_seen).toLocaleDateString()}`,
-                type: 'live_member' as LocationType,
-                latitude: member.latitude,
-                longitude: member.longitude,
-                status: member.status
-              })) : allMapLocations).map((location) => {
+              {allMapLocations.map((location) => {
                 const config = locationTypeConfig[location.type] || locationTypeConfig.poi;
+                const isLiveVan = location.type === ('live_van' as LocationType);
                 return (
                   <Card key={location.id} className="hover:shadow-glow transition-all duration-300">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <div 
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: config.color }}
-                        />
+                        {isLiveVan ? (
+                          <div className="relative">
+                            <Truck className="w-5 h-5 text-primary" />
+                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                          </div>
+                        ) : (
+                          <div
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: config.color }}
+                          />
+                        )}
                         {location.name}
+                        {isLiveVan && (
+                          <Badge variant="default" className="text-xs">LIVE</Badge>
+                        )}
                         {location.type === 'live_member' && (
                           <Badge variant="secondary" className="text-xs">
                             {location.status}
@@ -434,7 +654,7 @@ const Map = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between">
-                        <Badge variant="outline">{config.label}</Badge>
+                        <Badge variant="outline">{isLiveVan ? 'Live Van' : config.label}</Badge>
                         {location.rating && location.rating > 0 && (
                           <div className="flex items-center gap-1">
                             <Star className="w-4 h-4 text-secondary fill-current" />

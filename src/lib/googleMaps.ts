@@ -109,6 +109,11 @@ export const locationTypeConfig = {
     color: '#10b981', // emerald
     icon: 'https://cdn-icons-png.flaticon.com/32/1077/1077114.png', // location icon
     label: 'Live Member'
+  },
+  live_van: {
+    color: '#0ea5e9', // sky blue
+    icon: 'https://cdn-icons-png.flaticon.com/32/3097/3097180.png', // van/truck icon
+    label: 'Live Sprinter'
   }
 };
 

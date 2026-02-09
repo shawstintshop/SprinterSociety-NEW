@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Search, Menu, Bell, MessageSquare, MapPin, Video, Calendar, ShoppingBag, Crown, User, LogOut } from "lucide-react";
+import { Search, Menu, Bell, MessageSquare, MapPin, Video, Calendar, ShoppingBag, Crown, User, LogOut, Satellite } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -54,6 +54,10 @@ const Header = () => {
           <Link to="/marketplace" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
             <ShoppingBag className="w-4 h-4" />
             <span>Shop</span>
+          </Link>
+          <Link to="/gps" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+            <Satellite className="w-4 h-4" />
+            <span>GPS</span>
           </Link>
         </nav>
 
@@ -134,6 +138,10 @@ const Header = () => {
             <Link to="/marketplace" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
               <ShoppingBag className="w-5 h-5" />
               <span className="font-medium">Shop</span>
+            </Link>
+            <Link to="/gps" className="flex items-center space-x-3 text-foreground hover:text-primary transition-colors py-2" onClick={() => setIsMenuOpen(false)}>
+              <Satellite className="w-5 h-5" />
+              <span className="font-medium">GPS Tracking</span>
             </Link>
             <div className="pt-3 border-t border-border">
               <Button variant="hero" className="w-full mb-2">

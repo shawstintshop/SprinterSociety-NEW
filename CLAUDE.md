@@ -57,6 +57,8 @@ No test runner is configured. No CI/CD pipelines exist.
 │   │   ├── MapPreview.tsx         # Map preview on landing page
 │   │   ├── FallbackMap.tsx        # Static fallback when Maps API unavailable
 │   │   ├── PremiumSection.tsx     # Premium features CTA
+│   │   ├── GPSSettings.tsx        # GPS tracking settings panel with privacy controls
+│   │   ├── LiveLocationTracker.tsx # Headless geolocation watcher component
 │   │   └── ui/                    # 50+ shadcn/ui components (auto-generated)
 │   ├── pages/
 │   │   ├── Index.tsx              # Home / landing page
@@ -67,11 +69,14 @@ No test runner is configured. No CI/CD pipelines exist.
 │   │   ├── Marketplace.tsx        # Buy/sell marketplace
 │   │   ├── News.tsx               # Events and news
 │   │   ├── Vendors.tsx            # Service provider directory
+│   │   ├── GPSTracking.tsx        # GPS tracking settings page
 │   │   └── NotFound.tsx           # 404 page
 │   ├── hooks/
 │   │   ├── useAuth.tsx            # Auth context hook re-export
 │   │   ├── useGoogleMaps.tsx      # Google Maps initialization
 │   │   ├── useRealtimePresence.tsx # Real-time member location tracking
+│   │   ├── useVanLocation.tsx     # Van GPS tracking state & geolocation watcher
+│   │   ├── useRealtimeVanLocations.tsx # Subscribe to live van location updates
 │   │   ├── useYouTubeSync.tsx     # Auto-sync YouTube videos (24h interval)
 │   │   ├── use-mobile.tsx         # Mobile breakpoint detection
 │   │   └── use-toast.ts           # Toast notification hook
@@ -127,6 +132,7 @@ Provider hierarchy (outermost to innermost):
 | `/news` | Events/news feed | No |
 | `/vendors` | Vendor directory | No |
 | `/auth` | Sign in / Sign up | No |
+| `/gps` | GPS tracking settings | Yes |
 | `*` | 404 Not Found | No |
 
 ### State Management
@@ -172,6 +178,21 @@ Provider hierarchy (outermost to innermost):
 **user_locations** — Real-time member presence
 - `user_id`, `latitude`, `longitude`, `status`, `message`
 - `is_public` (boolean), `last_seen` (timestamp)
+
+**van_locations** — GPS-tracked van positions (PostGIS)
+- `id`, `user_id` (FK, unique constraint for upsert)
+- `geom` (geography Point 4326 — PostGIS), `latitude`, `longitude`
+- `speed`, `heading`, `accuracy` (from Geolocation API)
+- `visibility` (public | friends_only | event | private)
+- `precision` (exact | approximate — city-level obfuscation)
+- `expires_at` (auto-expiry), `status`, `message`
+- RLS: public locations readable by anyone; users CRUD own records
+- PostGIS functions: `upsert_van_location()`, `nearby_vans(lat, lng, radius)`
+
+**gps_sharing_settings** — Per-user GPS preferences
+- `user_id` (unique), `sharing_enabled`, `default_visibility`
+- `default_precision`, `default_duration`, `auto_pause_hours`
+- `update_interval_sec`
 
 ### Row-Level Security (RLS)
 
@@ -313,3 +334,56 @@ The project uses shadcn/ui with the `default` style and `slate` base color. Comp
 4. Lint before committing: `npm run lint`
 5. Build for production: `npm run build`
 6. Database changes: Add SQL migrations in `supabase/migrations/`
+
+---
+
+## Van GPS Tracking (Phase 5)
+
+### Overview
+
+Real-time van location sharing using browser Geolocation API. Users opt-in to share their Sprinter's position, visible on the main map with privacy controls.
+
+### Architecture Flow
+
+```
+Browser Geolocation API (watchPosition)
+  → useVanLocation hook (throttles updates)
+    → Supabase RPC: upsert_van_location()
+      → van_locations table (PostGIS Point)
+        → Supabase Realtime broadcast
+          → useRealtimeVanLocations hook
+            → Map markers update in real-time
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/hooks/useVanLocation.tsx` | Manages GPS state, geolocation watcher, settings persistence |
+| `src/hooks/useRealtimeVanLocations.tsx` | Subscribes to live van_locations changes via Supabase Realtime |
+| `src/components/GPSSettings.tsx` | Full settings UI with privacy controls, emergency stop |
+| `src/components/LiveLocationTracker.tsx` | Headless component — auto-starts tracking when enabled |
+| `src/pages/GPSTracking.tsx` | GPS settings page at `/gps` |
+| `src/pages/Map.tsx` | Updated with "Live Vans" filter and real-time van markers |
+| `supabase/migrations/20260209000000_add_van_gps_tracking.sql` | PostGIS schema, RLS, functions |
+
+### Privacy Controls
+
+- **Visibility**: public / friends_only / event / private
+- **Precision**: exact or approximate (~5km city-level obfuscation)
+- **Duration**: until_off / 24h / 1_week / forever
+- **Auto-pause**: Configurable hours of inactivity before auto-stop
+- **Emergency Stop**: One-tap delete all location data
+
+### PostGIS Setup
+
+PostGIS must be enabled in the Supabase dashboard (Database → Extensions → postgis → Enable) before the migration will work. The migration creates:
+- `van_locations` table with `geography(Point, 4326)` column
+- `gps_sharing_settings` table
+- `upsert_van_location()` function (handles obfuscation)
+- `nearby_vans()` function (ST_DWithin proximity search)
+- `cleanup_expired_van_locations()` function (for cron cleanup)
+
+### Hardware Tracker Support (Future)
+
+The UI includes a "Hardware GPS Trackers" section with recommended devices (Bouncie, Spytec GL300, LandAirSea 54). Webhook/API integration for hardware trackers is planned for a future phase.
